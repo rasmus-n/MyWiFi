@@ -43,16 +43,9 @@ void MyWiFi::setup()
         if (json.success()) {
           Serial.println("\nparsed json");
 
-          if (json["hostname"])
-          {
-            m_hostname = (const char*) json["hostname"];
-            wifi_station_set_hostname((char*) m_hostname.c_str());            
-          }
-          
-          if (json["server"])
-          {
-            m_server = (const char*) json["server"];
-          }
+          strcpy(m_hostname, json["hostname"]);
+          wifi_station_set_hostname(m_hostname);            
+          strcpy(m_server, json["server"]);
 
         } else {
           Serial.println("failed to load json config");
@@ -63,7 +56,7 @@ void MyWiFi::setup()
     Serial.println("failed to mount FS");
   }
   
-  m_hostname = wifi_station_get_hostname();
+  strcpy(m_hostname, wifi_station_get_hostname());
   
   Serial.print("Connecting to WiFi");
   int i = 0;
@@ -85,29 +78,19 @@ void saveConfigCallback()
   shouldSaveConfig = true;
 }
 
-const string& MyWiFi::hostname()
-{
-  return m_hostname;
-}
-
-const string& MyWiFi::server()
-{
-  return m_server;
-}
-
 void MyWiFi::config()
 {
   WiFiManager wifiManager;
   
-  WiFiManagerParameter hostname_config("Hostname", "hostname", m_hostname.c_str(), CONFIG_STRING_LENGTH);
-  WiFiManagerParameter server_config("Server", "server", m_server.c_str(), CONFIG_STRING_LENGTH);
+  WiFiManagerParameter hostname_config("Hostname", "hostname", m_hostname, CONFIG_STRING_LENGTH);
+  WiFiManagerParameter server_config("Server", "server", m_server, CONFIG_STRING_LENGTH);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.addParameter(&hostname_config);
   wifiManager.addParameter(&server_config);
   wifiManager.setMinimumSignalQuality(60);
   wifiManager.setConfigPortalTimeout(300);
   
-  if (!wifiManager.startConfigPortal(m_hostname.c_str()))
+  if (!wifiManager.startConfigPortal(m_hostname))
   {
     ESP.restart();
   }
@@ -116,11 +99,11 @@ void MyWiFi::config()
     DynamicJsonBuffer jsonBuffer;
     JsonObject& json = jsonBuffer.createObject();
     
-    m_hostname = hostname_config.getValue();
-    json["hostname"] = m_hostname.c_str();
+    strcpy(m_hostname, hostname_config.getValue());
+    json["hostname"] = m_hostname;
     
-    m_server = server_config.getValue();
-    json["server"] = m_server.c_str();
+    strcpy(m_server, server_config.getValue());
+    json["server"] = m_server;
   
     File configFile = SPIFFS.open("/config.json", "w");
     if (!configFile) {
