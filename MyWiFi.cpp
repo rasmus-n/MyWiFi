@@ -44,7 +44,7 @@ void MyWiFi::setup()
           Serial.println("\nparsed json");
 
           strcpy(m_hostname, json["hostname"]);
-          wifi_station_set_hostname(m_hostname);            
+          wifi_station_set_hostname(m_hostname);
           strcpy(m_server, json["server"]);
 
         } else {
@@ -55,14 +55,14 @@ void MyWiFi::setup()
   } else {
     Serial.println("failed to mount FS");
   }
-  
+
   strcpy(m_hostname, wifi_station_get_hostname());
-  
+
   Serial.print("Connecting to WiFi");
   int i = 0;
-  while (WiFi.status() != WL_CONNECTED) {  //Wait for the connection to the WiFi network 
+  while (WiFi.status() != WL_CONNECTED) {  //Wait for the connection to the WiFi network
 
-    delay(500);
+    delay(1000);
     Serial.print('.');
     if (i++ > 10)
     {
@@ -81,7 +81,7 @@ void saveConfigCallback()
 void MyWiFi::config()
 {
   WiFiManager wifiManager;
-  
+
   WiFiManagerParameter hostname_config("Hostname", "hostname", m_hostname, CONFIG_STRING_LENGTH);
   WiFiManagerParameter server_config("Server", "server", m_server, CONFIG_STRING_LENGTH);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
@@ -89,7 +89,7 @@ void MyWiFi::config()
   wifiManager.addParameter(&server_config);
   wifiManager.setMinimumSignalQuality(60);
   wifiManager.setConfigPortalTimeout(300);
-  
+
   if (!wifiManager.startConfigPortal(m_hostname))
   {
     ESP.restart();
@@ -98,22 +98,22 @@ void MyWiFi::config()
   if (shouldSaveConfig) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& json = jsonBuffer.createObject();
-    
+
     strcpy(m_hostname, hostname_config.getValue());
     json["hostname"] = m_hostname;
-    
+
     strcpy(m_server, server_config.getValue());
     json["server"] = m_server;
-  
+
     File configFile = SPIFFS.open("/config.json", "w");
     if (!configFile) {
       Serial.println("failed to open config file for writing");
     }
-  
+
     json.printTo(Serial);
     json.printTo(configFile);
     configFile.close();
-    
+
     ESP.restart();
   }
 
