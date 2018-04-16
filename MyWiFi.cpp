@@ -52,6 +52,12 @@ void MyWiFi::setup()
         }
       }
     }
+    else
+    {
+      Serial.println("config file not found");
+      strcpy(m_hostname, wifi_station_get_hostname());
+      sprintf(m_server, "piport");
+    }
   } else {
     Serial.println("failed to mount FS");
   }
@@ -87,7 +93,7 @@ void MyWiFi::config()
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.addParameter(&hostname_config);
   wifiManager.addParameter(&server_config);
-  wifiManager.setMinimumSignalQuality(60);
+  wifiManager.setMinimumSignalQuality(30);
   wifiManager.setConfigPortalTimeout(300);
 
   if (!wifiManager.startConfigPortal(m_hostname))
