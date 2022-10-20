@@ -17,6 +17,7 @@ bool shouldSaveConfig = false;
 void MyWiFi::setup()
 {
   WiFi.mode(WIFI_STA);
+  WiFi.begin(WiFi.SSID(), WiFi.psk());
 
   //clean FS, for testing
   //SPIFFS.format();
@@ -37,18 +38,18 @@ void MyWiFi::setup()
         std::unique_ptr<char[]> buf(new char[size]);
 
         configFile.readBytes(buf.get(), size);
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject& json = jsonBuffer.parseObject(buf.get());
-        json.printTo(Serial);
-        if (json.success()) {
+        DynamicJsonDocument jsonDoc(512);
+        auto error = deserializeJson(jsonDoc, buf.get());
+        serializeJson(jsonDoc, Serial);
+        if(error)
+        {
+          Serial.println("failed to load json config");
+        } else {
           Serial.println("\nparsed json");
 
-          strcpy(m_hostname, json["hostname"]);
+          strcpy(m_hostname, jsonDoc["hostname"]);
           wifi_station_set_hostname(m_hostname);
-          strcpy(m_server, json["server"]);
-
-        } else {
-          Serial.println("failed to load json config");
+          strcpy(m_server, jsonDoc["server"]);
         }
       }
     }
@@ -102,22 +103,23 @@ void MyWiFi::config()
   }
 
   if (shouldSaveConfig) {
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& json = jsonBuffer.createObject();
+    DynamicJsonDocument jsonDoc(512);
 
     strcpy(m_hostname, hostname_config.getValue());
-    json["hostname"] = m_hostname;
+    jsonDoc["hostname"] = m_hostname;
 
     strcpy(m_server, server_config.getValue());
-    json["server"] = m_server;
+    jsonDoc["server"] = m_server;
 
     File configFile = SPIFFS.open("/config.json", "w");
     if (!configFile) {
       Serial.println("failed to open config file for writing");
     }
 
-    json.printTo(Serial);
-    json.printTo(configFile);
+    serializeJson(jsonDoc, Serial);
+    serializeJson(jsonDoc, configFile);
+    //json.printTo(Serial);
+    //json.printTo(configFile);
     configFile.close();
 
     ESP.restart();
