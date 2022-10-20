@@ -1,0 +1,17 @@
+{
+  "name": "MyWiFi",
+  "version": "0.0.1",
+
+  "dependencies": [
+    {
+      "owner"   : "tzapu",
+      "name"    : "WiFiManager",
+      "version" : "^0.16.0"
+    },
+    {
+      "owner"   : "bblanchon",
+      "name"    : "ArduinoJson",
+      "version" : "^6.19.4"
+    }
+  ]
+}
